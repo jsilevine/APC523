@@ -1,0 +1,6 @@
+#+TITLE: Course Materials for APC523 Numerical Algorithms for Numerical Computing
+#+AUTHOR: Jacob Levine
+
+* Overview
+
+This repository contains Jacob's code and notes for to the APC523 taught at Princeton University Spring 2022. All problem sets can be found in the =problem_sets= directory, notes in the =notes= directory, and final project materials in the =final_project= directory.
