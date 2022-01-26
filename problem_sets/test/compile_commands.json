@@ -1,0 +1,20 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "main.cpp"
+    ],
+    "directory": "/Users/jacoblevine/Documents/Science/Princeton/APC523/problem_sets/test",
+    "file": "/Users/jacoblevine/Documents/Science/Princeton/APC523/problem_sets/test/main.cpp"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "fact.cpp"
+    ],
+    "directory": "/Users/jacoblevine/Documents/Science/Princeton/APC523/problem_sets/test",
+    "file": "/Users/jacoblevine/Documents/Science/Princeton/APC523/problem_sets/test/fact.cpp"
+  }
+]

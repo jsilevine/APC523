@@ -1,0 +1,96 @@
+
+#+TITLE: APC523 -- Lecture Notes
+#+AUTHOR: Jacob Levine
+
+* Lecture 1 -- <2022-01-24 Sun> Introduction and Overview
+
+** Defining computational science
+
+- Theory -> Experiment (computation required for all steps)
+- What is computational science?
+  - concerned with the design, implementation, and use of mathematical models to analyse and solve scientific problems.
+  - _Examples_: High Performance Computing, Numerical Analysis, applied to an Application domain (physics, climate, chemistry, ... ecology?)
+  - We have a model for which we know the master equations -- we compute predictions by solving these equations.
+  - vs. data science, where we have a lot of data but no equations (typically no theory)
+- Using data science for scientific computing:
+  - emulation techniques (interpolations in parameter space)
+  - neural networks for subgrid turbulence models
+  - machine learning for numerical regularization
+- Software engineering vs. algorithmic design
+- Simplify too much with pen+paper math (need to simulate to understand?)
+
+** Scientific computing and experiments
+
+- virtual experiments are cheaper than real experiments
+  - explore in advance the parameter space
+  - experiments are only used to calibrate a few critical cases
+  - examples: nuclear testing, wind tunnels
+  - Some experiments are just too complex -- forward modeling and mock observations
+
+** Supercomputers
+
+- exponential growth in supercomputer performance (moores (?) law)
+- Computer architecture -- now in era of GPUs
+
+** Algorithms
+
+- Example from astrophysics:
+  - N body codes (each galaxy is one body)
+  - Direct N body: perform direct summation above for all particle \(O(N^2)\)
+  - Particle mesh (PM or PIC): deposit particle mass onto a mesh and solve Poisson equation with the Fast Fourier Transform, Interpolate force back to particle. \(O(N lnN)\)
+  - Tree code: group distant source particles into macro particles using an octree and a clever tree opening criterion \(O(N ln N)\)
+  - PM with adaptive mesh refinement and multigrid method \(O(N)\)
+  - Tree code with Fast Multipole Method: group also sink particles sharing the same distant force contribution (double tree walk) \(O(N)\)
+- *Algorithms can lead to order of magnitude improvements in computing time*
+- Can lead to arms race between developing fast algorithms and fast computers (need to adapt to new hardware!)
+
+** Typical equations in physics and engineering
+
+- Advection equation: \(\frac{du}{dt} + a\frac{du}{dx} = 0\)
+
+    *Solution:*
+    We use fourier analysis to solve this equation: \(u(x, t) = \int_{-\infty}^{infty}u_{hat}(k,t)e^{ikx}dk\)
+
+    Since the advection equation is linear, we can solve each mode independently
+
+    \(\frac{du}{dt} + ikau_{hat} ->\)
+
+    Solution: \u(x,t) = (u_0(x-at)\).
+
+- Wave equation: \(\frac{d^2u}{dt^2} = a^2\frac{d^2u}{dx^2}\)
+
+  *Solution*
+
+    Fourier transform again (review later)
+
+    Homework: find u_0^+(x) and u_0^-(x) as a function of u(x,0) and \(\frac{du}{dt}(x,0)\)
+
+- Heat equation: \(\frac{du}{dt} = v\frac{d^2}{dx^2}\)
+
+    Fourier transform
+
+- Burgers' equation: \(\frac{du}{dt} + u\frac{du}{dx} = v\frac{d^2u}{dx^2}\)
+- All are Scalar 1D linear and non-linear Partial Differential Equations
+
+- *More complex -- hyperbolic systems of conservation laws*
+
+  - Euler equations -- system of scalar equations
+    - Linearize to the linearized euler equations by defining small perturbations around an equilibrium.
+    - calculate eigenvectors (for homework)
+
+
+* Lecture 2 -- <2022-01-26 Wed> Computing infrastructure
+
+- Connecting to Adroit using =ssh=
+- Software environment using =module=
+- Software versioning using =git=
+
+- adroit.princeton.edu
+   - for Mac OS:
+     - iTerm
+     - XQuartz
+- connect to adroit
+   - off campus, connect to VPN
+   - use =ssh -X yourlogin@adroit.princeton.edu=
+   - enter password again
+- get account on adroit
