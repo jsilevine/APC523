@@ -79,18 +79,166 @@
     - calculate eigenvectors (for homework)
 
 
-* Lecture 2 -- <2022-01-26 Wed> Computing infrastructure
+* COMMENT Lecture 2 -- <2022-01-26 Wed> Computing infrastructure
 
 - Connecting to Adroit using =ssh=
 - Software environment using =module=
 - Software versioning using =git=
 
 - adroit.princeton.edu
-   - for Mac OS:
-     - iTerm
-     - XQuartz
+  - for Mac OS:
+    - iTerm
+    - XQuartz
 - connect to adroit
-   - off campus, connect to VPN
-   - use =ssh -X yourlogin@adroit.princeton.edu=
-   - enter password again
+  - off campus, connect to VPN
+  - use =ssh -X yourlogin@adroit.princeton.edu=
+  - enter password again
 - get account on adroit
+
+- gnuplot
+  =plot "run.log" ::::1000 u 2:3 title "initial density"=
+  - can I use R/python to generate my plots?
+
+- Compile and run with mpi
+  - =make <program> MPI=1=
+
+- slurm
+  - =srun -n <cores> t 00:01:00 <program name>=
+
+
+* Lecture 4 -- <2022-02-02 Wed> Parallel computing
+
+- Processor speed is plateauing.
+- # cores per machine is increasing exponentially --> parallel computing is best way to increase computing speed
+- Amdahl's law: theoreticla max speedup obtained by parallelizing a code ideally is given by\(Speedup(N) = \frac{T_s}{T_p(N)} = \frac{1}{\alpha + \frac{1 - \alpha}{N}}\)
+  - \(\alpha\) is fraction of code that is not paralellizable, \(N\) is number of processors
+- efficiency plateaus at \(1-\alpha\)
+- Strong vs. weak scaling -- need to run both tests
+- Parallel programming languages:
+  - MPI (focus on this in course)
+  - OpenMP (simpler than MPI -- but you control less)
+  - GPU programming in CUDA or OpenACC/OpenMP
+- Distributed vs. shared memory
+  - MPI uses a distributed memory paradigm -- data are transferred explicitly between nodes through the network.
+
+** OpenMP
+- started in the 90s where multiple vendors were using their own multi-threading directives during the era of vector processing.
+- On <1997-10-28 Tue> they all met and adopted the open multi processing standard
+- OpenMP is specified by the architecture review board
+
+*** General concepts
+- multi-threading
+- an openMP program is executed by only one process, called the master thread. The corresponding piece of code is called a sequential region.
+- the master thread activates light-weight processes, called the worker threads. this marks in the code the entry of a parallel region.
+- each thread executes a task corresponding to a block of instructions. During the execution of the task, variables can be read from or updated in memory.
+- The variable can be defined in the local memory of the thread called the stack memory. The variable is called a private variable.
+- The variable can be defined in the main shared (RAM) memory also called the heap. the variable is called a shared variable.
+- *This can be a problem in openMP* -- distinction between shared and private variables not always explicitly
+*** Compilation
+- compilation directives and clauses:
+  - they are put in the program to create the threads, define the work etc. need to specify -openmp on the compilation command linear
+- Functions and routines:
+  - openMP contains several dedicated functions like MPI. part of the library that can be linked at a link time.
+- Environment variables:
+  - OpenMP has several environmental variables that can be set at execution time.
+
+*** Parallel region
+- In a parallel region, by default, the data sharing attribute of variables is shared.
+- within a single parallel region, all concurrent threads execute the same code in parallel.
+- there is an implicit synchronization barrier at the end of the parallel region.
+
+#+BEGIN_SRC fortran
+
+program parallel
+      !$ use OMP_LIB
+      implicit none
+      real :: a
+      logical :: p
+
+            a = 92290 ; pa=false.
+            !SOMP_PARALLEL
+
+#+END_SRC
+
+
+- using the DEFAULT clause, it is possible to change the default attribute to PRIVATE
+- if a variable is PRIVATE, it will be stored in the stack memory of each thread. Its value is undetermined when entering the parallel region.
+- using the FIRSTPRIVATE clause, it is possible to force the initialization of a PRIVATE variable to the last value it has outside the parallel region.
+- Using the NUM_THREADS() clause allows to set the number of children in a parallel region.
+- OPT_GET_NUM_THREADS() gets current value
+
+*** Parallel loops
+- A parallel loop is a do-loop where each iteration is independent from the others.
+- Loop indices are always private integer variables
+- While loops are not supported.
+
+*** Work scheduling
+- the distribution strategy is set by a SCHEDULE directive
+- proper scheduling can optimize the load-balancing of the work.
+- By default, global syncronization is enacted at the end of each loop
+- the NOWAIT directive can remove barrier
+- can define schedule by RUNTIME
+
+*Want to minimize the number of parallel regions* -- takes time to activate and kill threads. Multiple DO loops
+
+*** Misc.
+- In a parallel loop, if one needs to perform a global operation, one uses the REDUCTION clause.
+- Logical -- AND OR EQV NEQV Intrinsic -- MAX MIN IAND IOR IEOR, Arithmetic
+- Each thread computes partial results, which are combined at the end of the parallel loop.
+- the directive =!$OMP BARRIER= forces teh synchronization of all threads within a parallel region
+- The directive =ATOMIC= and =CRITICAL= can be used to force a serial variable update and avoid race conditions.
+
+*** Best practices:
+- minimize number of parallel regions
+- adjust the number of threads to the size of the problem (threads come with overhead)
+- always parallelize the outermost loop on the outermost moving index of an array (non-consecutive in memory)
+- Conflicts between threads can lead to poor cache memory management (the so-called cache misses). L! and L2 memory management is key
+- Performance analysis with OpenMP can be done using several functions to get wall clock time.
+
+** MPI
+
+*** Implementations
+- OpenMPI - MPICH
+*** Tools
+- Debuggers and performance analysis tools:
+  - Totalview, DDT, Scalasca (or use "write")
+- Scientific libraries
+  - Scalapack
+  - PETSc
+  - FFTW
+*** General concepts
+- MPI is a library which allows process coordination and scheduling between millions of processors using a message-passing paradigm.
+- The message is sent from a source process to a target process: sender address and recipient address
+- The message contains a header
+  - Identifier of the sending process (sender id)
+  - The type of the message data (datatype)
+  - The length of the message data (data length)
+  - Identifier of the receiving process (receiver id)
+- The message contains data
+- The messages are managed and interpreted by a runtime system comparable to a telephone provider or postal company
+- Message are sent to a specific address. Receiving processes must be able to classify and interpret incoming messages
+- An MPI application is a group of autonomous processes deployed on different nodes, each one executing its own code and communication to the other processes via calls to routines in the MPI library.
+
+*** Data distribution
+- Data are distributed between nodes and cores using a domain decomposition strategy (recursive bisection?)
+
+*** Basics
+- MPI environment variables: =include mpi.h=
+- Launching the MPI environment
+  - =MPI-INIT()= routine
+- Terminating
+
+*** Blocking send and receive
+
+
+
+
+* Lecture <2022-02-09 Wed>
+** Finite difference approximation
+- basic method to design numerical approx of the first derivative is to use lagrange interpolation over a subset of points called the kernel
+- In the general the kernel is defined such that \(x_i\) is in the center.
+- If L=R, the kernel is symmetric and the FD scheme is called a central scheme
+- If L>R the kernel is skewed left and called a backward or left-biased scheme (leading order term has negative sign)
+- If L<R -- forward/right-biased scheme (leading order term has a positive sign)
+- Leading order term is term in T-exp with power >
+- =import sympy= -- for symbolic arithmetic in =python=.
