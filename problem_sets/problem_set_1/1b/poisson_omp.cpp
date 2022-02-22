@@ -74,13 +74,13 @@ int main(int argc, char *argv[]) {
     // Jacobi method
     err = 0.;
 
-#pragma omp parallel firstprivate(arr_prev, terr, np) shared(arr_curr) reduction(max:err) 
+#pragma omp parallel firstprivate(arr_prev, terr) shared(arr_curr) reduction(max:err) 
     #pragma omp for
     for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
       std::cout << "thread: " << t << ", "
-                << NGHOST+t*np << ", " << NGHOST+(t+1)*np;
-      for (i = NGHOST+t*np; i < NGHOST+(t+1)*np; ++i) { // only calculate values for interior cells
-        for (j = NGHOST+t*np; j < NGHOST+(t+1)*np; ++j) {
+                << NGHOST+t*np << ", " << NGHOST-1+(t+1)*np;
+      for (i = NGHOST+t*np; i < NGHOST-1+(t+1)*np; ++i) { // only calculate values for interior cells
+        for (j = NGHOST; j < nwg-NGHOST; ++j) {
           arr_curr[(i*nwg)+j] =
             0.25 * (arr_prev[(i-1)*nwg+j]     + arr_prev[(i+1)*nwg+j] +
                     arr_prev[i    *nwg+(j-1)] + arr_prev[i    *nwg+(j+1)]) -
