@@ -77,7 +77,8 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel firstprivate(arr_prev, terr, np) shared(arr_curr) reduction(max:err) 
     #pragma omp for
     for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
-      std::cout << NGHOST+t*np << ", " << NGHOST+(t+1)*np;
+      std::cout << "thread: " << t << ", "
+                << NGHOST+t*np << ", " << NGHOST+(t+1)*np;
       for (i = NGHOST+t*np; i < NGHOST+(t+1)*np; ++i) { // only calculate values for interior cells
         for (j = NGHOST+t*np; j < NGHOST+(t+1)*np; ++j) {
           arr_curr[(i*nwg)+j] =
