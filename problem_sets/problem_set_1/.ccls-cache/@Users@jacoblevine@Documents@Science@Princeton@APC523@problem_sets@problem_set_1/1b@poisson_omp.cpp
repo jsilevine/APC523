@@ -41,8 +41,8 @@ int main(int argc, char *argv[]) {
   np = (n/nthreads); // size of parallel block
 
   // Allocate and fill the working array and previous step array
-  double* arr_curr = (double*) calloc(np*np*nthreads, sizeof(double));
-  double* arr_prev = (double*) calloc(np*np*nthreads, sizeof(double));
+  double* arr_curr = (double*) calloc(nwg*nwg, sizeof(double));
+  double* arr_prev = (double*) calloc(nwg*nwg, sizeof(double));
 
   // Fill in the source function
   double  x, y = 0.;
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   double  terr = 0.;
   double  ffac = .25 * pow(h, 2.);
   double* tarr = NULL;
-  //auto    strt = std::chrono::steady_clock::now();
+  auto    strt = std::chrono::steady_clock::now();
 
   // initialize threads
   omp_set_num_threads(nthreads);
@@ -116,9 +116,9 @@ int main(int argc, char *argv[]) {
   }
 
   // Print timing this doesn't work on my mac so commenting out until moving to adroit
-  //auto stop = std::chrono::steady_clock::now();
-  //std::chrono::duration<double>  durr = stop - strt;
-  //std::cout << "Finished in " << durr.count() << " s" << std::endl;
+  auto stop = std::chrono::steady_clock::now();
+  std::chrono::duration<double>  durr = stop - strt;
+  std::cout << "Finished in " << durr.count() << " s" << std::endl;
 
   // Final time step output
   if (FOUT) {
@@ -135,6 +135,16 @@ int main(int argc, char *argv[]) {
       arr_file.close();
     } else {
       std::cout << "Can't open file for final phi output";
+    }
+    // write runtime output
+    std::ofstream timing_file("time.csv", std::ios::app);
+    if (timing_file.is_open()) {
+
+      timing_file << nthreads << ", " << durr.cout() << ", " << std::endl;
+      timing_file.close();
+
+    } else {
+      std::cout << "Can't open file for timing output";
     }
   }
 
