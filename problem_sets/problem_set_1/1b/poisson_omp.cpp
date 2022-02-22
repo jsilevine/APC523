@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     #pragma omp barrier // make sure threads have finished running before
                           // dealing with boundary conditions
 
-  #pragma omp for
+    //  #pragma omp for
     for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
            for (i = NGHOST+t*np; i < NGHOST-1+(t+1)*np; ++i) { // only calculate values for interior cells
         for (j = 0; j < NGHOST; ++j) {
