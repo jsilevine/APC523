@@ -8,5 +8,7 @@
 
 module purge
 module load openmpi/gcc/4.1.0
+module load R/4.0.5
 
 ./a.out 128 1e-6 2
+Rscript p1a_fig_gen.R
