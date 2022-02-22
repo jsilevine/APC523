@@ -4,7 +4,6 @@
 #include <limits>
 #include <chrono>
 #include <math.h>
-#include <omp.h>
 
 #define NDEF    64
 #define NGHOST  1
@@ -14,9 +13,8 @@
 
 int main(int argc, char *argv[]) {
   // Initialize variables
-  int n, nwg, np = 1; //np is number of cells in parallel block
-  int t,i,j    = 0;
-  int nthreads = 1;
+  int n, nwg = 1;
+  int i,j    = 0;
   double h   = 1.;
   double eps = 1.e-6;
 
@@ -28,17 +26,12 @@ int main(int argc, char *argv[]) {
   } else if (argc == 3) {
     n = atoi(argv[1]);
     eps = atof(argv[2]);
-  } else if (argc == 4) {
-    n = atoi(argv[1]);
-    eps = atof(argv[2]);
-    nthreads = atoi(argv[3]); //take N threads as input to program
   } else {
-    std::cout << "Usage: ./laplace [n eps nthreads]" << std::endl;
+    std::cout << "Usage: ./laplace [n eps]" << std::endl;
     exit(1);
   }
   nwg = n + 2*NGHOST;
   h   = 1./n; //gridcell size
-  np = (n/nthreads); // size of parallel block
 
   // Allocate and fill the working array and previous step array
   double* arr_curr = (double*) calloc(nwg*nwg, sizeof(double));
@@ -65,44 +58,32 @@ int main(int argc, char *argv[]) {
   double  terr = 0.;
   double  ffac = .25 * pow(h, 2.);
   double* tarr = NULL;
-  auto    strt = std::chrono::steady_clock::now();
-
-  // initialize threads
-  omp_set_num_threads(nthreads);
+  //auto    strt = std::chrono::steady_clock::now();
 
   while (err > eps && iter < MAXITER) {
     // Jacobi method
     err = 0.;
 
-#pragma omp parallel firstprivate(arr_prev, terr) shared(arr_curr) reduction(max:err) 
-    #pragma omp for
-    for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
-      std::cout << "thread: " << t << ", "
-                << NGHOST+t*np << ", " << NGHOST-1+(t+1)*np;
-      for (i = NGHOST+t*np; i < NGHOST-1+(t+1)*np; ++i) { // only calculate values for interior cells
-        for (j = NGHOST; j < nwg-NGHOST; ++j) {
-          arr_curr[(i*nwg)+j] =
-            0.25 * (arr_prev[(i-1)*nwg+j]     + arr_prev[(i+1)*nwg+j] +
-                    arr_prev[i    *nwg+(j-1)] + arr_prev[i    *nwg+(j+1)]) -
-            ffac * fval[(i-NGHOST)*n+(j-NGHOST)];
-          terr = std::abs(arr_curr[i*nwg+j] - arr_prev[i*nwg+j]);
-          err  = (terr > err) ? terr: err;
-        }
+    for (i = NGHOST; i < nwg-NGHOST; ++i) {
+      for (j = NGHOST; j < nwg-NGHOST; ++j) {
+        arr_curr[i*nwg+j] =
+          0.25 * (arr_prev[(i-1)*nwg+j]     + arr_prev[(i+1)*nwg+j] +
+                  arr_prev[i    *nwg+(j-1)] + arr_prev[i    *nwg+(j+1)]) -
+          ffac * fval[(i-NGHOST)*n+(j-NGHOST)];
+        terr = abs(arr_curr[i*nwg+j] - arr_prev[i*nwg+j]);
+        err  = (terr > err) ? terr: err;
       }
     }
-    #pragma omp barrier // make sure threads have finished running before
-                          // dealing with boundary conditions
 
-    //    for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
-    for (i = NGHOST; i < nwg-NGHOST; ++i) { // only calculate values for interior cells
-        for (j = 0; j < NGHOST; ++j) {
-          arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
-          arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
-          arr_curr[j*nwg+i]              = arr_curr[NGHOST*nwg+i];
-          arr_curr[(nwg-NGHOST+j)*nwg+i] = arr_curr[(nwg-NGHOST-1)*nwg+i];
-        }
+    // Neumann boundary conditions
+    for (i = NGHOST; i < nwg-NGHOST; ++i) {
+      for (j = 0; j < NGHOST; ++j) {
+        arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
+        arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
+        arr_curr[j*nwg+i]              = arr_curr[NGHOST*nwg+i];
+        arr_curr[(nwg-NGHOST+j)*nwg+i] = arr_curr[(nwg-NGHOST-1)*nwg+i];
       }
-	   // }
+    }
 
     // Swap pointers
     tarr     = arr_prev;
@@ -117,9 +98,9 @@ int main(int argc, char *argv[]) {
   }
 
   // Print timing this doesn't work on my mac so commenting out until moving to adroit
-  auto stop = std::chrono::steady_clock::now();
-  std::chrono::duration<double>  durr = stop - strt;
-  std::cout << "Finished in " << durr.count() << " s" << std::endl;
+  //auto stop = std::chrono::steady_clock::now();
+  //std::chrono::duration<double>  durr = stop - strt;
+  //std::cout << "Finished in " << durr.count() << " s" << std::endl;
 
   // Final time step output
   if (FOUT) {
@@ -136,16 +117,6 @@ int main(int argc, char *argv[]) {
       arr_file.close();
     } else {
       std::cout << "Can't open file for final phi output";
-    }
-    // write runtime output
-    std::ofstream timing_file("time.csv", std::ios::app);
-    if (timing_file.is_open()) {
-
-      timing_file << nthreads << ", " << durr.count() << ", " << std::endl;
-      timing_file.close();
-
-    } else {
-      std::cout << "Can't open file for timing output";
     }
   }
 
