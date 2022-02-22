@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     // Jacobi method
     err = 0.;
 
-#pragma omp parallel firstprivate(arr_prev, terr, np) shared(arr_curr) reduction(max:err) {
+#pragma omp parallel firstprivate(arr_prev, terr, np) shared(arr_curr) reduction(max:err) 
     #pragma omp for
     for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
       for (i = NGHOST+t*np; i < NGHOST+(t+1)*np; ++i) { // only calculate values for interior cells
