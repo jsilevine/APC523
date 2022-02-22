@@ -5,8 +5,8 @@ require("ggplot2")
 dat <- read.csv("final_phi.csv", header = FALSE)
 
 ## convert to long format and add x and y vals for plotting
-dat <- matrix(as.matrix(dat[,1:128]), ncol = 1)
-dat <- cbind(dat, matrix(c(rep(seq(1, 128), each = 128), rep(seq(1, 128), times = 128)), ncol = 2))
+dat <- matrix(as.matrix(dat[,1:16]), ncol = 1)
+dat <- cbind(dat, matrix(c(rep(seq(1, 16), each = 16), rep(seq(1, 16), times = 16)), ncol = 2))
 colnames(dat) <- c("phi", "x", "y")
 dat <- as.data.frame(dat) ## change to data.frame
 
