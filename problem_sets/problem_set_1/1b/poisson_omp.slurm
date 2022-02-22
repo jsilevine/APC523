@@ -9,4 +9,4 @@
 module purge
 module load openmpi/gcc/4.1.0
 
-./a.out
+./a.out 128 1e-6
