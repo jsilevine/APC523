@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 
   #pragma omp for
     for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
-      for (i = NGHOST+t*np; i < NGHOST+(t+1)*np; ++i) {
+           for (i = NGHOST+t*np; i < NGHOST-1+(t+1)*np; ++i) { // only calculate values for interior cells
         for (j = 0; j < NGHOST; ++j) {
           arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
           arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
