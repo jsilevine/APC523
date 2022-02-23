@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
 
       #pragma omp barrier
       
-      #pragma omp single
+#pragma omp single // execute error aggregation and pointer reassignment with on one thread only
       {
       
       if (nthreads == 1) {
@@ -129,12 +129,9 @@ int main(int argc, char *argv[]) {
 
       if (iter%OUTFREQ == 0 || err < eps) {
 	std::cout << "Iter. " << std::setw(8) << iter <<
-	  ", err = " << std::scientific <<  err <<
-	  ", err_1 = " << arr_err[0] << ", err_2 = " << arr_err[1] << std::endl;
+	  ", err = " << std::scientific <<  err << std::endl;
       }
-      }
-      
-    #pragma omp barrier
+      } // there is an implicit barrier at end of "omp single" block
       
     }
   }
@@ -163,7 +160,7 @@ int main(int argc, char *argv[]) {
     std::ofstream timing_file("time.csv", std::ios::app);
     if (timing_file.is_open()) {
 
-      timing_file << nthreads << ", " << durr.count() << ", " << std::endl;
+      timing_file << nthreads << ", " << durr.count() << std::endl;
       timing_file.close();
 
     } else {
