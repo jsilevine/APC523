@@ -5,6 +5,8 @@
 #include <chrono>
 #include <math.h>
 #include <omp.h>
+#include <algorithm>
+#include <iterator>
 
 #define NDEF    64
 #define NGHOST  1
@@ -44,6 +46,7 @@ int main(int argc, char *argv[]) {
   double* arr_curr = (double*) calloc(nwg*nwg, sizeof(double));
   double* arr_prev = (double*) calloc(nwg*nwg, sizeof(double));
 
+			    
   // Fill in the source function
   double  x, y = 0.;
   double* fval = (double*) malloc(n*n*sizeof(double));
@@ -70,31 +73,38 @@ int main(int argc, char *argv[]) {
   // initialize threads
   omp_set_num_threads(nthreads);
 
+
+
+  {   
   while (err > eps && iter < MAXITER) {
     // Jacobi method
+   
     err = 0.;
 
-#pragma omp parallel firstprivate(arr_prev, terr) shared(arr_curr) reduction(max:err) 
-    #pragma omp for
+    std::cout << "iter: " << iter << std::endl;
+#pragma omp parallel firstprivate(arr_prev, terr) shared(arr_curr) reduction(max:err)    
+    {
+    #pragma omp for 
     for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
-      std::cout << "thread: " << t << ", "
-                << NGHOST+t*np << ", " << NGHOST-1+(t+1)*np;
-      for (i = NGHOST+t*np; i < NGHOST-1+(t+1)*np; ++i) { // only calculate values for interior cells
+      for (i = NGHOST+t*np; i < (t+1)*np+1; ++i) { // only calculate values for interior cells
         for (j = NGHOST; j < nwg-NGHOST; ++j) {
-          arr_curr[(i*nwg)+j] =
+	  arr_curr[(i*nwg)+j] =
             0.25 * (arr_prev[(i-1)*nwg+j]     + arr_prev[(i+1)*nwg+j] +
                     arr_prev[i    *nwg+(j-1)] + arr_prev[i    *nwg+(j+1)]) -
             ffac * fval[(i-NGHOST)*n+(j-NGHOST)];
           terr = std::abs(arr_curr[i*nwg+j] - arr_prev[i*nwg+j]);
-          err  = (terr > err) ? terr: err;
-        }
+	  err = (terr > err) ? terr: err;
+
+
+	}
       }
     }
+    
     #pragma omp barrier // make sure threads have finished running before
-                          // dealing with boundary conditions
-
-    //    for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
-    for (i = NGHOST; i < nwg-NGHOST; ++i) { // only calculate values for interior cells
+              
+    #pragma omp for
+    for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
+      for (i = NGHOST+t*np; i < (t+1)*np+1; ++i) { // only calculate values for interior cells
         for (j = 0; j < NGHOST; ++j) {
           arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
           arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
@@ -102,8 +112,10 @@ int main(int argc, char *argv[]) {
           arr_curr[(nwg-NGHOST+j)*nwg+i] = arr_curr[(nwg-NGHOST-1)*nwg+i];
         }
       }
-	   // }
+     }
 
+    }
+     std::cout << err << std::endl;
     // Swap pointers
     tarr     = arr_prev;
     arr_prev = arr_curr;
@@ -115,8 +127,7 @@ int main(int argc, char *argv[]) {
         ", err = " << std::scientific <<  err << std::endl;
     }
   }
-
-  // Print timing this doesn't work on my mac so commenting out until moving to adroit
+}
   auto stop = std::chrono::steady_clock::now();
   std::chrono::duration<double>  durr = stop - strt;
   std::cout << "Finished in " << durr.count() << " s" << std::endl;
