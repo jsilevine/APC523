@@ -11,13 +11,13 @@
 #define NDEF    64
 #define NGHOST  1
 #define MAXITER 100000
-#define OUTFREQ 1000
+#define OUTFREQ 100
 #define FOUT    1
 
 int main(int argc, char *argv[]) {
   // Initialize variables
   int n, nwg, np = 1; //np is number of cells in parallel block
-  int t,i,j    = 0;
+  int i, j, t = 0;
   int nthreads = 1;
   double h   = 1.;
   double eps = 1.e-6;
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   // Allocate and fill the working array and previous step array
   double* arr_curr = (double*) calloc(nwg*nwg, sizeof(double));
   double* arr_prev = (double*) calloc(nwg*nwg, sizeof(double));
-
+  double* arr_err = (double*) calloc(nthreads, sizeof(double));
 			    
   // Fill in the source function
   double  x, y = 0.;
@@ -65,69 +65,85 @@ int main(int argc, char *argv[]) {
   // Main loop
   int     iter = 0;
   double  err  = std::numeric_limits<double>::max();
-  double  terr = 0.;
   double  ffac = .25 * pow(h, 2.);
   double* tarr = NULL;
   auto    strt = std::chrono::steady_clock::now();
 
   // initialize threads
   omp_set_num_threads(nthreads);
+  #pragma omp parallel
+  {
+  
+    double terr = 0.;
+    double err_m = 0.;
+    
+    while (err > eps && iter < MAXITER) {
+      
+      int tn = omp_get_thread_num();
+      err_m = 0.;
+      arr_err[tn] = 0.;
+     
+      #pragma omp for
+      for (t = 0; t<nthreads; ++t) {
+	for (i = NGHOST+t*np; i < (t+1)*np+1; ++i) { // only calculate values for interior cells
+	  for (j = NGHOST; j < nwg-NGHOST; ++j) {
+	    arr_curr[(i*nwg)+j] =
+	      0.25 * (arr_prev[(i-1)*nwg+j]     + arr_prev[(i+1)*nwg+j] +
+		      arr_prev[i    *nwg+(j-1)] + arr_prev[i    *nwg+(j+1)]) -
+	      ffac * fval[(i-NGHOST)*n+(j-NGHOST)];
+	    terr = std::abs(arr_curr[i*nwg+j] - arr_prev[i*nwg+j]);
+	    err_m = (terr > err_m) ? terr: err_m;
 
+	  }
+	}	
+      }
 
-
-  {   
-  while (err > eps && iter < MAXITER) {
-    // Jacobi method
-   
-    err = 0.;
-
-    std::cout << "iter: " << iter << std::endl;
-#pragma omp parallel firstprivate(arr_prev, terr) shared(arr_curr) reduction(max:err)    
-    {
-    #pragma omp for 
-    for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
-      for (i = NGHOST+t*np; i < (t+1)*np+1; ++i) { // only calculate values for interior cells
-        for (j = NGHOST; j < nwg-NGHOST; ++j) {
-	  arr_curr[(i*nwg)+j] =
-            0.25 * (arr_prev[(i-1)*nwg+j]     + arr_prev[(i+1)*nwg+j] +
-                    arr_prev[i    *nwg+(j-1)] + arr_prev[i    *nwg+(j+1)]) -
-            ffac * fval[(i-NGHOST)*n+(j-NGHOST)];
-          terr = std::abs(arr_curr[i*nwg+j] - arr_prev[i*nwg+j]);
-	  err = (terr > err) ? terr: err;
-
-
+      #pragma omp critical
+      {
+	arr_err[tn] = err_m;
+	// std::cout << "error: " << tn << " = " << err_m << " = " << arr_err[tn] << std::endl;
+      }
+      
+      #pragma omp for
+      for(t = 0; t < nthreads; ++t) {
+      	for (i = NGHOST+t*np; i < (t+1)*np+1; ++i) { // only calculate values for interior cells
+	  for (j = 0; j < NGHOST; ++j) {
+	    arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
+	    arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
+	    arr_curr[j*nwg+i]              = arr_curr[NGHOST*nwg+i];
+	    arr_curr[(nwg-NGHOST+j)*nwg+i] = arr_curr[(nwg-NGHOST-1)*nwg+i];
+	  }
 	}
       }
-    }
     
-    #pragma omp barrier // make sure threads have finished running before
-              
-    #pragma omp for
-    for (t = 0; t < nthreads; ++t) { // loop over parallel blocks
-      for (i = NGHOST+t*np; i < (t+1)*np+1; ++i) { // only calculate values for interior cells
-        for (j = 0; j < NGHOST; ++j) {
-          arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
-          arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
-          arr_curr[j*nwg+i]              = arr_curr[NGHOST*nwg+i];
-          arr_curr[(nwg-NGHOST+j)*nwg+i] = arr_curr[(nwg-NGHOST-1)*nwg+i];
-        }
+      // Swap pointers
+      #pragma omp master
+      {
+	// err = std::max(arr_err[0], arr_err[1]);
+       	//std::cout << "err = " << err << std::endl;
+	if (nthreads == 1) {
+	  err = arr_err[0];
+	} else {
+	for (i = 0; i < nthreads-1; ++i) {
+	  err = std::max(arr_err[i], arr_err[i+1]);
+	}
+	}
+	//std::cout << "I am placing arr_prev: " << arr_prev[180] << " into arr_curr, then arr_curr: " << arr_curr[180] << " into arr_prev" << std::endl;
+	tarr     = arr_prev;
+	arr_prev = arr_curr;
+	arr_curr = tarr;
+	
+	iter++;
+
+      if (iter%OUTFREQ == 0 || err < eps) {
+	std::cout << "Iter. " << std::setw(8) << iter <<
+	  ", err = " << std::scientific <<  err <<
+	  ", err_1 = " << arr_err[0] << ", err_2 = " << arr_err[1] << std::endl;
       }
-     }
-
-    }
-     std::cout << err << std::endl;
-    // Swap pointers
-    tarr     = arr_prev;
-    arr_prev = arr_curr;
-    arr_curr = tarr;
-
-    iter++;
-    if (iter%OUTFREQ == 0 || err < eps) {
-      std::cout << "Iter. " << std::setw(8) << iter <<
-        ", err = " << std::scientific <<  err << std::endl;
+      }
     }
   }
-}
+  
   auto stop = std::chrono::steady_clock::now();
   std::chrono::duration<double>  durr = stop - strt;
   std::cout << "Finished in " << durr.count() << " s" << std::endl;
