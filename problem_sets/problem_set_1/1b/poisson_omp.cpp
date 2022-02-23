@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 
   // initialize threads
   omp_set_num_threads(nthreads);
-#pragma omp parallel
+#pragma omp parallel private(i,j,t)
   {
   
     double terr = 0.;
@@ -80,11 +80,10 @@ int main(int argc, char *argv[]) {
     int tn = omp_get_thread_num();
     
     while (err > eps && iter < MAXITER) {
+
       err_m = 0.;
       arr_err[tn] = 0.;
      
-      // #pragma omp for
-      // for (t = 0; t<nthreads; ++t) {
 	for (i = NGHOST+tn*np; i < (tn+1)*np+1; ++i) { // only calculate values for interior cells
 	  for (j = NGHOST; j < nwg-NGHOST; ++j) {
 	    arr_curr[(i*nwg)+j] =
@@ -96,14 +95,14 @@ int main(int argc, char *argv[]) {
 
 	  }
 	}
-	arr_err[tn] = err_m;
-	  // }
-
+      arr_err[tn] = err_m;
+      
       #pragma omp barrier
 	
       #pragma omp single
-      for(t = 0; t < nthreads; ++t) {
-      	for (i = NGHOST+t*np; i < (t+1)*np+1; ++i) { // only calculate values for interior cells
+      {
+	//     for(t = 0; t < nthreads; ++t) {
+      	for (i = NGHOST; i < nwg-NGHOST; ++i) { // only calculate values for interior cells
 	  for (j = 0; j < NGHOST; ++j) {
 	    arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
 	    arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
@@ -111,37 +110,31 @@ int main(int argc, char *argv[]) {
 	    arr_curr[(nwg-NGHOST+j)*nwg+i] = arr_curr[(nwg-NGHOST-1)*nwg+i];
 	  }
 	}
-      }
-
-      #pragma omp barrier
+	//      }
       
-      // Swap pointers
-      #pragma omp single
-      {
-
-	std::cout << "err 1 = " << arr_err[0] << " err 2 = " << arr_err[1] << std::endl;
-	
-	if (nthreads == 1) {
-	  err = arr_err[0];
-	} else {
-	  for (i = 0; i < nthreads-1; ++i) {
-	    err = std::max(arr_err[i], arr_err[i+1]);
-	  }
+      if (nthreads == 1) {
+	err = arr_err[0];
+      } else {
+	for (i = 0; i < nthreads-1; ++i) {
+	  err = std::max(arr_err[i], arr_err[i+1]);
 	}
+      }
 	
-	tarr     = arr_prev;
-	arr_prev = arr_curr;
-	arr_curr = tarr;
+      tarr     = arr_prev;
+      arr_prev = arr_curr;
+      arr_curr = tarr;
 	
-	iter++;
+      iter++;
 
-	if (iter%OUTFREQ == 0 || err < eps) {
-	  std::cout << "Iter. " << std::setw(8) << iter <<
-	    ", err = " << std::scientific <<  err <<
-	    ", err_1 = " << arr_err[0] << ", err_2 = " << arr_err[1] << std::endl;
+      if (iter%OUTFREQ == 0 || err < eps) {
+	std::cout << "Iter. " << std::setw(8) << iter <<
+	  ", err = " << std::scientific <<  err <<
+	  ", err_1 = " << arr_err[0] << ", err_2 = " << arr_err[1] << std::endl;
       }
       }
-      #pragma omp barrier
+      
+    #pragma omp barrier
+      
     }
   }
   
