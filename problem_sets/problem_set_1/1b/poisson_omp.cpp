@@ -98,11 +98,8 @@ int main(int argc, char *argv[]) {
       arr_err[tn] = err_m;
       
       #pragma omp barrier
-	
-      #pragma omp single
-      {
-	//     for(t = 0; t < nthreads; ++t) {
-      	for (i = NGHOST; i < nwg-NGHOST; ++i) { // only calculate values for interior cells
+   
+      for (i = NGHOST+tn*np; i < (tn+1)*np+1; ++i) { // only calculate values for interior cells
 	  for (j = 0; j < NGHOST; ++j) {
 	    arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
 	    arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
@@ -110,7 +107,11 @@ int main(int argc, char *argv[]) {
 	    arr_curr[(nwg-NGHOST+j)*nwg+i] = arr_curr[(nwg-NGHOST-1)*nwg+i];
 	  }
 	}
-	//      }
+
+      #pragma omp barrier
+      
+      #pragma omp single
+      {
       
       if (nthreads == 1) {
 	err = arr_err[0];
