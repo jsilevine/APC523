@@ -189,39 +189,42 @@ Iter.    18800, err = 1.056287e-06
 Iter.    18900, err = 1.032256e-06
 Iter.    19000, err = 1.008883e-06
 Iter.    19039, err = 9.999418e-07
-[adroit-15:657628:0:657628] Caught signal 11 (Segmentation fault: Sent by the kernel at address (nil))
-==== backtrace (tid: 657628) ====
- 0  /lib64/libucs.so.0(ucs_handle_error+0x2a4) [0x148a40f582a4]
- 1  /lib64/libucs.so.0(+0x2347c) [0x148a40f5847c]
- 2  /lib64/libucs.so.0(+0x2364a) [0x148a40f5864a]
- 3  /lib64/libucs.so.0(ucs_mpool_cleanup+0x2d) [0x148a40f5128d]
- 4  /lib64/libucp.so.0(ucp_worker_destroy+0xc2) [0x148a415f78d2]
- 5  /usr/local/openmpi/4.1.0/gcc/lib64/openmpi/mca_pml_ucx.so(mca_pml_ucx_cleanup+0x17b) [0x148a41a5612b]
- 6  /usr/local/openmpi/4.1.0/gcc/lib64/libmpi.so.40(ompi_mpi_finalize+0x59c) [0x148a5050d79c]
+[adroit-15:657844:0:657844] Caught signal 11 (Segmentation fault: Sent by the kernel at address (nil))
+==== backtrace (tid: 657844) ====
+ 0  /lib64/libucs.so.0(ucs_handle_error+0x2a4) [0x151ce87582a4]
+ 1  /lib64/libucs.so.0(+0x2347c) [0x151ce875847c]
+ 2  /lib64/libucs.so.0(+0x2364a) [0x151ce875864a]
+ 3  /lib64/libucs.so.0(ucs_mpool_cleanup+0x7a) [0x151ce87512da]
+ 4  /lib64/libucp.so.0(ucp_worker_destroy+0xc2) [0x151ce8df78d2]
+ 5  /usr/local/openmpi/4.1.0/gcc/lib64/openmpi/mca_pml_ucx.so(mca_pml_ucx_cleanup+0x17b) [0x151ce925612b]
+ 6  /usr/local/openmpi/4.1.0/gcc/lib64/libmpi.so.40(ompi_mpi_finalize+0x59c) [0x151cf7d5579c]
  7  ./a.out() [0x409d4a]
- 8  /usr/lib64/libc.so.6(__libc_start_main+0xf3) [0x148a4f5cd493]
+ 8  /usr/lib64/libc.so.6(__libc_start_main+0xf3) [0x151cf6e15493]
  9  ./a.out() [0x408c2e]
 =================================
-[adroit-15:657628] *** Process received signal ***
-[adroit-15:657628] Signal: Segmentation fault (11)
-[adroit-15:657628] Signal code:  (-6)
-[adroit-15:657628] Failing at address: 0x2557c000a08dc
-[adroit-15:657628] [ 0] /usr/lib64/libpthread.so.0(+0x12c20)[0x148a4f981c20]
-[adroit-15:657628] [ 1] /lib64/libucs.so.0(ucs_mpool_cleanup+0x2d)[0x148a40f5128d]
-[adroit-15:657628] [ 2] /lib64/libucp.so.0(ucp_worker_destroy+0xc2)[0x148a415f78d2]
-[adroit-15:657628] [ 3] /usr/local/openmpi/4.1.0/gcc/lib64/openmpi/mca_pml_ucx.so(mca_pml_ucx_cleanup+0x17b)[0x148a41a5612b]
-[adroit-15:657628] [ 4] /usr/local/openmpi/4.1.0/gcc/lib64/libmpi.so.40(ompi_mpi_finalize+0x59c)[0x148a5050d79c]
-[adroit-15:657628] [ 5] ./a.out[0x409d4a]
-[adroit-15:657628] [ 6] /usr/lib64/libc.so.6(__libc_start_main+0xf3)[0x148a4f5cd493]
-[adroit-15:657628] [ 7] ./a.out[0x408c2e]
-[adroit-15:657628] *** End of error message ***
+[adroit-15:657844] *** Process received signal ***
+[adroit-15:657844] Signal: Segmentation fault (11)
+[adroit-15:657844] Signal code:  (-6)
+[adroit-15:657844] Failing at address: 0x2557c000a09b4
+[adroit-15:657844] [ 0] /usr/lib64/libpthread.so.0(+0x12c20)[0x151cf71c9c20]
+[adroit-15:657844] [ 1] /lib64/libucs.so.0(ucs_mpool_cleanup+0x7a)[0x151ce87512da]
+[adroit-15:657844] [ 2] /lib64/libucp.so.0(ucp_worker_destroy+0xc2)[0x151ce8df78d2]
+[adroit-15:657844] [ 3] /usr/local/openmpi/4.1.0/gcc/lib64/openmpi/mca_pml_ucx.so(mca_pml_ucx_cleanup+0x17b)[0x151ce925612b]
+[adroit-15:657844] [ 4] /usr/local/openmpi/4.1.0/gcc/lib64/libmpi.so.40(ompi_mpi_finalize+0x59c)[0x151cf7d5579c]
+[adroit-15:657844] [ 5] ./a.out[0x409d4a]
+[adroit-15:657844] [ 6] /usr/lib64/libc.so.6(__libc_start_main+0xf3)[0x151cf6e15493]
+[adroit-15:657844] [ 7] ./a.out[0x408c2e]
+[adroit-15:657844] *** End of error message ***
+[1645677569.519503] [adroit-15:657844:0]            sys.c:932  UCX  WARN  Unable to detach shared memory segment at 0x1936fc0: Invalid argument
 Made it past finalize, arr_final contains: 9.984648e-02
-Finished in 2.338851e+00 s
+Finished in 2.338780e+00 s
 --------------------------------------------------------------------------
 Primary job  terminated normally, but 1 process returned
 a non-zero exit code. Per user-direction, the job has been aborted.
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
-mpirun noticed that process rank 1 with PID 657628 on node adroit-15 exited on signal 11 (Segmentation fault).
+mpirun noticed that process rank 1 with PID 657844 on node adroit-15 exited on signal 11 (Segmentation fault).
 --------------------------------------------------------------------------
-Fatal error: cannot open file 'p1a_fig_gen.R': No such file or directory
+Loading required package: ggplot2
+Saving 7 x 7 in image
+[1] "output saved to phi_128.png"
