@@ -47,9 +47,9 @@ int main(int argc, char *argv[]) {
   double  x, y = 0.;
   double* fval = (double*) malloc(n*n*sizeof(double));
   for (i = 0; i < n; ++i) {
-    y = (i + .5) * h;
+    x = (i + .5) * h;
     for (j = 0; j < n; ++j) {
-      x = (j + .5) * h;
+      y = (j + .5) * h;
       fval[i*n+j] =
         pow(M_PI,2.) * (16.*pow(y,2.)+81.*pow(x,4.))
           * cos(2*M_PI*pow(y,2.)) * cos(3*M_PI*pow(x,3.))
@@ -112,11 +112,13 @@ int main(int argc, char *argv[]) {
 	    // only fill in top and bottom boundary conditions if top or bottom cell
 	    if (tn == 0) {
 	      arr_curr[j*nwg+i]              = arr_curr[NGHOST*nwg+i];
-	    } else if (tn == world_size-1) {
+	    } else if (tn != 0 & tn == world_size-1) {
 	      arr_curr[(nwg-NGHOST+j)*nwg+i] = arr_curr[(nwg-NGHOST-1)*nwg+i];
 	    }
 	    }
 	}
+
+      if (nthreads > 1) {
       
       for (i = 0; i<nwg*NGHOST; ++i) {
 
@@ -133,15 +135,15 @@ int main(int argc, char *argv[]) {
 	//receive from and send to top only if bottom cell
 	MPI_Send(tosendup, nwg, MPI_LONG_DOUBLE, tn+1, tn*10+(tn+1), MPI_COMM_WORLD);
 	MPI_Recv(torecvup, nwg, MPI_LONG_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
-      } else if (tn == world_size-1) {
+      } else if (tn == tn !=0 & world_size-1) {
 	MPI_Send(tosenddown, nwg, MPI_LONG_DOUBLE, tn-1, tn*10+(tn-1), MPI_COMM_WORLD);
 	MPI_Recv(torecvdown, nwg, MPI_LONG_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
       } else {
 	//receive and send to both top and bottom if in the middle
-	MPI_Recv(&torecvup, 1, MPI_LONG_DOUBLE, tn+1, (tn+1)*10+tn, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	MPI_Send(&tosendup, 1, MPI_LONG_DOUBLE, tn+1, tn*10+(tn+1), MPI_COMM_WORLD);
-	MPI_Recv(&torecvdown, 1, MPI_LONG_DOUBLE, tn-1, (tn-1)*10+tn, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	MPI_Send(&tosenddown, 1, MPI_LONG_DOUBLE, tn-1, tn*10+(tn-1), MPI_COMM_WORLD);
+	//	MPI_Recv(torecvup, 1, MPI_LONG_DOUBLE, tn+1, (tn+1)*10+tn, MPI_COMM_WORLD, NULL);
+	//	MPI_Send(tosendup, 1, MPI_LONG_DOUBLE, tn+1, tn*10+(tn+1), MPI_COMM_WORLD);
+	//	MPI_Recv(torecvdown, 1, MPI_LONG_DOUBLE, tn-1, (tn-1)*10+tn, MPI_COMM_WORLD, NULL);
+	//	MPI_Send(tosenddown, 1, MPI_LONG_DOUBLE, tn-1, tn*10+(tn-1), MPI_COMM_WORLD);
       }
       
       MPI_Barrier(MPI_COMM_WORLD);
@@ -165,7 +167,7 @@ int main(int argc, char *argv[]) {
 	}
 	
       }
-      
+      }
       tarr     = arr_prev;
       arr_prev = arr_curr;
       arr_curr = tarr;
