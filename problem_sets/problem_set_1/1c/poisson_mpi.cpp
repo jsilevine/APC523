@@ -122,12 +122,12 @@ int main(int argc, char *argv[]) {
 
       if (nthreads > 1) {
       
-      for (i = 0; i<nwg*NGHOST; ++i) {
+	for (i = 0; i<nwg*NGHOST; ++i) {
 
-	tosenddown[i] = arr_curr[(nwg*NGHOST) + i];
-	tosendup[i] = arr_curr[((npwg-NGHOST-1)*nwg)+i];
+	  tosenddown[i] = arr_curr[(nwg*NGHOST) + i];
+	  tosendup[i] = arr_curr[((npwg-NGHOST-1)*nwg)+i];
 		
-      }
+	}
 
       MPI_Barrier(MPI_COMM_WORLD);
       
@@ -144,11 +144,11 @@ int main(int argc, char *argv[]) {
 	MPI_Recv(torecvdown, nwg, MPI_LONG_DOUBLE, tn-1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
 	std::cout << "I, thread: " << tn << " received from thread: " << tn-1 << std::endl;
       } else {
-	//receive and send to both top and bottom if in the middle
-	//	MPI_Recv(torecvup, 1, MPI_LONG_DOUBLE, tn+1, (tn+1)*10+tn, MPI_COMM_WORLD, NULL);
-	//	MPI_Send(tosendup, 1, MPI_LONG_DOUBLE, tn+1, tn*10+(tn+1), MPI_COMM_WORLD);
-	//	MPI_Recv(torecvdown, 1, MPI_LONG_DOUBLE, tn-1, (tn-1)*10+tn, MPI_COMM_WORLD, NULL);
-	//	MPI_Send(tosenddown, 1, MPI_LONG_DOUBLE, tn-1, tn*10+(tn-1), MPI_COMM_WORLD);
+	//	receive and send to both top and bottom if in the middle
+		MPI_Recv(torecvup, 1, MPI_LONG_DOUBLE, tn+1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+		MPI_Send(tosendup, 1, MPI_LONG_DOUBLE, tn+1, tn*10+(tn+1), MPI_COMM_WORLD);
+		MPI_Recv(torecvdown, 1, MPI_LONG_DOUBLE, tn-1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+		MPI_Send(tosenddown, 1, MPI_LONG_DOUBLE, tn-1, tn*10+(tn-1), MPI_COMM_WORLD);
       }
       
       MPI_Barrier(MPI_COMM_WORLD);
