@@ -1,0 +1,49 @@
+rm: cannot remove 'time.csv': No such file or directory
+rm: cannot remove 'final_phi.csv': No such file or directory
+rm: cannot remove 'phi_128.png': No such file or directory
+npwg = 66 np = 64 nwg = 130
+npwg = 66 np = 64 nwg = 130
+[adroit-11:726181:0:726181] Caught signal 11 (Segmentation fault: address not mapped to object at address 0x16f4078)
+==== backtrace (tid: 726181) ====
+ 0  /lib64/libucs.so.0(ucs_handle_error+0x2a4) [0x14740535f2a4]
+ 1  /lib64/libucs.so.0(+0x2347c) [0x14740535f47c]
+ 2  /lib64/libucs.so.0(+0x2364a) [0x14740535f64a]
+ 3  ./a.out() [0x409997]
+ 4  /usr/lib64/libc.so.6(__libc_start_main+0xf3) [0x1474139d6493]
+ 5  ./a.out() [0x408c2e]
+=================================
+[adroit-11:726181] *** Process received signal ***
+[adroit-11:726181] Signal: Segmentation fault (11)
+[adroit-11:726181] Signal code:  (-6)
+[adroit-11:726181] Failing at address: 0x2557c000b14a5
+[adroit-11:726181] [ 0] /usr/lib64/libpthread.so.0(+0x12c20)[0x147413d8ac20]
+[adroit-11:726181] [ 1] ./a.out[0x409997]
+[adroit-11:726181] [ 2] /usr/lib64/libc.so.6(__libc_start_main+0xf3)[0x1474139d6493]
+[adroit-11:726181] [ 3] ./a.out[0x408c2e]
+[adroit-11:726181] *** End of error message ***
+I, thread: 0am sending rows: 130 through 260 to thread 1
+I, thread: 0received from thread: 1
+crashing after barrier 
+crashing after this 
+crashing after this 
+I, thread: 1 am sending rows: 8320 through 8450 to thread 0
+I, thread: 1 received from thread: 0
+crashing after barrier 
+crashing after this 
+crashing after this 
+[1645736620.370036] [adroit-11:726180:0]         tcp_ep.c:1044 UCX  ERROR tcp_ep 0x15e7420 (state=CONNECTED): recv(35) failed: Connection reset by remote peer
+[1645736620.370069] [adroit-11:726180:0]         tcp_ep.c:1044 UCX  ERROR tcp_ep 0x15e72b0 (state=CONNECTED): recv(33) failed: Connection reset by remote peer
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun noticed that process rank 1 with PID 726181 on node adroit-11 exited on signal 11 (Segmentation fault).
+--------------------------------------------------------------------------
+Loading required package: ggplot2
+Error in file(file, "rt") : cannot open the connection
+Calls: read.csv -> read.table -> file
+In addition: Warning message:
+In file(file, "rt") :
+  cannot open file 'final_phi.csv': No such file or directory
+Execution halted

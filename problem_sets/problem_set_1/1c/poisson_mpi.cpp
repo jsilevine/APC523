@@ -69,16 +69,27 @@ int main(int argc, char *argv[]) {
   MPI_Init(NULL, NULL); 
   
   // Allocate and fill the working array and previous step array
-  double* arr_final = (double*) calloc(n*n, sizeof(double));
+  double arr_final[n*n];
+  // double arr_curr[npwg*nwg];
+  // double arr_prev[npwg*nwg];
+  double agg_arr[np*n];
+  double agg_send[np*n];
+  double tosendup[nwg*NGHOST];
+  double tosenddown[nwg*NGHOST];
+  double torecvup[nwg*NGHOST];
+  double torecvdown[nwg*NGHOST];
+  double* tarr = NULL;
+
+  //  double* arr_final = (double*) calloc(n*n, sizeof(double));
   double* arr_curr = (double*) calloc(npwg*nwg, sizeof(double));
   double* arr_prev = (double*) calloc(npwg*nwg, sizeof(double));      
-  double* agg_arr = (double*) calloc(np*n, sizeof(double));
-  double* agg_send = (double*) calloc(np*n, sizeof(double));
-  double* tosendup = (double*) calloc(nwg*NGHOST, sizeof(double));
-  double* tosenddown = (double*) calloc(nwg*NGHOST, sizeof(double));
-  double* torecvup = (double*) calloc(nwg*NGHOST, sizeof(double));
-  double* torecvdown = (double*) calloc(nwg*NGHOST, sizeof(double));
-  double* tarr = NULL;
+  // double* agg_arr = (double*) calloc(np*n, sizeof(double));
+  // double* agg_send = (double*) calloc(np*n, sizeof(double));
+  // double* tosendup = (double*) calloc(nwg*NGHOST, sizeof(double));
+  // double* tosenddown = (double*) calloc(nwg*NGHOST, sizeof(double));
+  // double* torecvup = (double*) calloc(nwg*NGHOST, sizeof(double));
+  // double* torecvdown = (double*) calloc(nwg*NGHOST, sizeof(double));
+  // double* tarr = NULL;
   double terr = 0.;
   double err_m = 0.;
   int tn = 0;
