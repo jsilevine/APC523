@@ -42,6 +42,8 @@ int main(int argc, char *argv[]) {
   h   = 1./n; //gridcell size
   np = (n/nthreads); // size of parallel block
   npwg = np + 2*NGHOST;
+
+  std::cout << "npwg = "<< npwg << " np = " << np << " nwg = " << nwg << std::endl;
   
   // Fill in the source function
   double  x, y = 0.;
@@ -72,10 +74,10 @@ int main(int argc, char *argv[]) {
   double* arr_prev = (double*) calloc(npwg*nwg, sizeof(double));      
   double* agg_arr = (double*) calloc(np*n, sizeof(double));
   double* agg_send = (double*) calloc(np*n, sizeof(double));
-  double* tosendup = (double*) calloc(nwg, sizeof(double));
-  double* tosenddown = (double*) calloc(nwg, sizeof(double));
-  double* torecvup = (double*) calloc(nwg, sizeof(double));
-  double* torecvdown = (double*) calloc(nwg, sizeof(double));
+  double* tosendup = (double*) calloc(nwg*NGHOST, sizeof(double));
+  double* tosenddown = (double*) calloc(nwg*NGHOST, sizeof(double));
+  double* torecvup = (double*) calloc(nwg*NGHOST, sizeof(double));
+  double* torecvdown = (double*) calloc(nwg*NGHOST, sizeof(double));
   double* tarr = NULL;
   double terr = 0.;
   double err_m = 0.;
@@ -124,8 +126,7 @@ int main(int argc, char *argv[]) {
 
 	tosenddown[i] = arr_curr[(nwg*NGHOST) + i];
 	tosendup[i] = arr_curr[((npwg-NGHOST-1)*nwg)+i];
-	
-	
+		
       }
 
       MPI_Barrier(MPI_COMM_WORLD);
@@ -134,10 +135,14 @@ int main(int argc, char *argv[]) {
       if (tn == 0) {
 	//receive from and send to top only if bottom cell
 	MPI_Send(tosendup, nwg, MPI_LONG_DOUBLE, tn+1, tn*10+(tn+1), MPI_COMM_WORLD);
-	MPI_Recv(torecvup, nwg, MPI_LONG_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+	std::cout << "I, thread: " << tn << "am sending rows: " << nwg*NGHOST << " through " << nwg*NGHOST + nwg*NGHOST << " to thread " << tn+1 << std::endl;
+	MPI_Recv(torecvup, nwg, MPI_LONG_DOUBLE, tn+1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+	std::cout << "I, thread: " << tn << "received from thread: " << tn+1 << std::endl;
       } else if (tn == tn !=0 & world_size-1) {
 	MPI_Send(tosenddown, nwg, MPI_LONG_DOUBLE, tn-1, tn*10+(tn-1), MPI_COMM_WORLD);
-	MPI_Recv(torecvdown, nwg, MPI_LONG_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+	std::cout << "I, thread: " << tn << " am sending rows: " << (npwg-NGHOST-1)*nwg << " through " << (npwg-NGHOST-1)*nwg + nwg*NGHOST << " to thread " << tn-1 << std::endl; 
+	MPI_Recv(torecvdown, nwg, MPI_LONG_DOUBLE, tn-1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+	std::cout << "I, thread: " << tn << " received from thread: " << tn-1 << std::endl;
       } else {
 	//receive and send to both top and bottom if in the middle
 	//	MPI_Recv(torecvup, 1, MPI_LONG_DOUBLE, tn+1, (tn+1)*10+tn, MPI_COMM_WORLD, NULL);
@@ -147,9 +152,10 @@ int main(int argc, char *argv[]) {
       }
       
       MPI_Barrier(MPI_COMM_WORLD);
-      
+      std::cout << "crashing after barrier " << std::endl;
       
       MPI_Allreduce(&err_m, &err, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD); //collect errors into max
+      std::cout << "crashing after this " << std::endl;
 
       if (tn == 0) {
       } else if (tn == world_size-1) {
@@ -168,13 +174,13 @@ int main(int argc, char *argv[]) {
 	
       }
       }
+      std::cout << "crashing after this " << std::endl;
       tarr     = arr_prev;
       arr_prev = arr_curr;
       arr_curr = tarr;
 
       MPI_Barrier(MPI_COMM_WORLD);
       iter++;
-
       if(tn == 0) {
 	     
 	if (iter%OUTFREQ == 0 || err < eps) {

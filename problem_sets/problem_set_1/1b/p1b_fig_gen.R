@@ -14,4 +14,4 @@ out <- ggplot(data, aes(x = num_cores, y = runtime)) +
   ylab("runtime (s)")
 
 filepath <- "omp_thread.png"
-ggsave(out, filepath)
+ggsave(filepath, out)
