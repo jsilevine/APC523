@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 	    arr_curr[(i*nwg)+j] =
 	      0.25 * (arr_prev[(i-1)*nwg+j]     + arr_prev[(i+1)*nwg+j] +
 		      arr_prev[i    *nwg+(j-1)] + arr_prev[i    *nwg+(j+1)]) -
-	      ffac * fval[tn*np+(i-NGHOST)*n+(j-NGHOST)];
+	      ffac * fval[tn*np*n+(i-NGHOST)*n+(j-NGHOST)];
 	    terr = std::abs(arr_curr[i*nwg+j] - arr_prev[i*nwg+j]);
 	    err_m = (terr > err_m) ? terr: err_m;
 
@@ -122,29 +122,20 @@ int main(int argc, char *argv[]) {
 
 	tosenddown[i] = arr_curr[(nwg*NGHOST) + i];
 	tosendup[i] = arr_curr[((npwg-NGHOST-1)*nwg)+i];
-	//	std::cout << "thread " << tn << " tosenddown = " << tosenddown[i] << "which is same as " << arr_curr[(nwg*NGHOST)+i] << std::endl;
-	//std::cout << "thread " << tn << " tosendup = " << tosendup[i] << "which is same as " << arr_curr[(npwg-NGHOST)*nwg+i] << std::endl;
 	
 	
       }
 
       MPI_Barrier(MPI_COMM_WORLD);
-
-      // std::cout << "made it to start of comms" << std::endl;
       
       // communications
       if (tn == 0) {
 	//receive from and send to top only if bottom cell
 	MPI_Send(tosendup, nwg, MPI_LONG_DOUBLE, tn+1, tn*10+(tn+1), MPI_COMM_WORLD);
-	//	std::cout << "I, thread " << tn << " am sending"<< tosendup[90]<< " to thread " << tn+1 << std::endl;
 	MPI_Recv(torecvup, nwg, MPI_LONG_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
-	//	std::cout << "I, thread " << tn << " am receiving from thread " << tn+1 << std::endl;	
       } else if (tn == world_size-1) {
-	//receive from and send to bottom only if top cell
 	MPI_Send(tosenddown, nwg, MPI_LONG_DOUBLE, tn-1, tn*10+(tn-1), MPI_COMM_WORLD);
-	//	std::cout << "I, thread " << tn << " am sending to thread " << tn-1 << std::endl;
 	MPI_Recv(torecvdown, nwg, MPI_LONG_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
-	//	std::cout << "I, thread " << tn << " am receiving from thread " << tn-1 << std::endl;
       } else {
 	//receive and send to both top and bottom if in the middle
 	MPI_Recv(&torecvup, 1, MPI_LONG_DOUBLE, tn+1, (tn+1)*10+tn, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -155,15 +146,11 @@ int main(int argc, char *argv[]) {
       
       MPI_Barrier(MPI_COMM_WORLD);
       
-      //     std::cout << "made it past comms" << std::endl;
       
       MPI_Allreduce(&err_m, &err, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD); //collect errors into max
 
-      // std::cout << "made it past reduction, error = " << err << std::endl;
       if (tn == 0) {
-	//std::cout << "torecvdown: " <<  torecvup[90] << std::endl;
       } else if (tn == world_size-1) {
-	//std::cout << "torecvup: " <<  torecvdown[90] << std::endl;
       }
       //reassign edge values
       for (i = 0; i<nwg*NGHOST; ++i) {
@@ -178,14 +165,10 @@ int main(int argc, char *argv[]) {
 	}
 	
       }
-
-      //      std::cout << "made it past edge reassignment" << std::endl;
       
       tarr     = arr_prev;
       arr_prev = arr_curr;
       arr_curr = tarr;
-
-      // std::cout << "made it past arr reassignment" << std::endl;
 
       MPI_Barrier(MPI_COMM_WORLD);
       iter++;
