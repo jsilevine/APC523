@@ -16,7 +16,7 @@ out <- ggplot(dat, aes(x = h)) +
     xlab("h") +
     ylab("L2 norm (log scale)") +
     scale_y_continuous(expand = c(0,0), limits = c(NA, NA)) +
-    scale_x_continuous(expand = c(0,0), limits = c(0, NA)) +
+    scale_x_continuous(expand = c(0,0), limits = c(NA, 0)) +
     theme_bw()
 
 is.vector(out)

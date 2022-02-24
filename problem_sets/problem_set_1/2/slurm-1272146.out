@@ -1,0 +1,27 @@
+grad= 1.1235e-3100
+100
+made it past grad calc 
+made it past true grad calc
+made it past L2
+grad= -1.17588e-3210
+400
+made it past grad calc 
+made it past true grad calc
+made it past L2
+grad= 00
+10000
+made it past grad calc 
+made it past true grad calc
+made it past L2
+grad= 00
+40000
+made it past grad calc 
+made it past true grad calc
+made it past L2
+grad= 00
+1000000
+made it past grad calc 
+made it past true grad calc
+made it past L2
+[1] FALSE
+Saving 7 x 7 in image
