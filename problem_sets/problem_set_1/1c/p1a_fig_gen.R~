@@ -1,3 +1,6 @@
+library(ggplot2)
+
+data <- read.csv(final_phi.csv, header = FALSE)
 ## file to make figure for problem set 1.1
 require("ggplot2")
 
@@ -24,3 +27,4 @@ filepath <- "phi_128.png"
 ggsave(filepath, out)
 
 print(paste0("output saved to ", filepath))
+
