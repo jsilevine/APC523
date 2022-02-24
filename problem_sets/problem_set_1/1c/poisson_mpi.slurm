@@ -15,5 +15,5 @@ rm time.csv
 rm final_phi.csv
 rm phi_128.png
 
-mpirun --use-hwthread-cpus -np 2 ./a.out 16 1e-6 2
+mpirun --use-hwthread-cpus -np 2 ./a.out 128 1e-6 2
 Rscript p1a_fig_gen.R

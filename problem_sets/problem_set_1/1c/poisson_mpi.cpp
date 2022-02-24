@@ -69,6 +69,21 @@ int main(int argc, char *argv[]) {
   int tn = 0;
   int world_size = 0;
   int iter = 0;
+     
+  // Fill in the source function
+  double  x, y = 0.;
+  double* fval = (double*) malloc(n*n*sizeof(double));
+  for (i = 0; i < npwg; ++i) {
+	x = (i + .5) * h;
+	for (j = 0; j < n; ++j) {
+	  y = (j + .5) * h;
+	  fval[i*n+j] =
+	    pow(M_PI,2.) * (16.*pow(y,2.)+81.*pow(x,4.))
+	    * cos(2*M_PI*pow(y,2.)) * cos(3*M_PI*pow(x,3.))
+	    + 18.*M_PI*x * sin(3*M_PI*pow(x,3.)) * cos(2*M_PI*pow(y,2.))
+	    + 4. *M_PI   * cos(3*M_PI*pow(x,3.)) * sin(2*M_PI*pow(y,2.));
+	}
+  }
   
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &tn);
@@ -78,23 +93,6 @@ int main(int argc, char *argv[]) {
     while (err > eps && iter < MAXITER) {
  
       err_m = 0.;
-
-
-        
-  // Fill in the source function
-  double  x, y = 0.;
-  double* fval = (double*) malloc(n*n*sizeof(double));
-  for (i = 0; i < npwg; ++i) {
-    x = (i + .5) * h;
-    for (j = 0; j < n; ++j) {
-      y = (j + .5) * h;
-      fval[i*n+j] =
-        pow(M_PI,2.) * (16.*pow(y,2.)+81.*pow(x,4.))
-          * cos(2*M_PI*pow(y,2.)) * cos(3*M_PI*pow(x,3.))
-        + 18.*M_PI*x * sin(3*M_PI*pow(x,3.)) * cos(2*M_PI*pow(y,2.))
-        + 4. *M_PI   * cos(3*M_PI*pow(x,3.)) * sin(2*M_PI*pow(y,2.));
-    }
-  }
       
 	for (i = NGHOST; i < npwg-NGHOST; ++i) { // only calculate values for interior cells
 	  for (j = NGHOST; j < nwg-NGHOST; ++j) {
@@ -108,7 +106,7 @@ int main(int argc, char *argv[]) {
 	  }
 	}
       
-      for (i = NGHOST; i < npwg-NGHOST; ++i) { // only calculate values for interior cells
+      for (i = NGHOST; i < npwg-NGHOST; ++i) { 
 	  for (j = 0; j < NGHOST; ++j) {
 	    arr_curr[i*nwg+j]              = arr_curr[i*nwg+NGHOST];
 	    arr_curr[i*nwg+nwg-NGHOST+j]   = arr_curr[i*nwg+nwg-NGHOST-1];
@@ -142,16 +140,17 @@ int main(int argc, char *argv[]) {
 	MPI_Recv(torecvup, nwg, MPI_LONG_DOUBLE, tn+1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
 	//	std::cout << "I, thread: " << tn << "received from thread: " << tn+1 << std::endl;
       } else if (tn == world_size-1) {
-	MPI_Send(tosenddown, nwg, MPI_LONG_DOUBLE, tn-1, 0, MPI_COMM_WORLD);
-	//	std::cout << "I, thread: " << tn << " am sending rows: " << (npwg-NGHOST-1)*nwg << " through " << (npwg-NGHOST-1)*nwg + nwg*NGHOST << " to thread " << tn-1 << std::endl; 
 	MPI_Recv(torecvdown, nwg, MPI_LONG_DOUBLE, tn-1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
 	//	std::cout << "I, thread: " << tn << " received from thread: " << tn-1 << std::endl;
+	MPI_Send(tosenddown, nwg, MPI_LONG_DOUBLE, tn-1, 0, MPI_COMM_WORLD);
+	//	std::cout << "I, thread: " << tn << " am sending rows: " << (npwg-NGHOST-1)*nwg << " through " << (npwg-NGHOST-1)*nwg + nwg*NGHOST << " to thread " << tn-1 << std::endl; 
       } else {
 	//	receive and send to both top and bottom if in the middle
-		MPI_Send(tosendup, 1, MPI_LONG_DOUBLE, tn+1, 0, MPI_COMM_WORLD);
 		MPI_Recv(torecvup, 1, MPI_LONG_DOUBLE, tn+1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
-		MPI_Send(tosenddown, 1, MPI_LONG_DOUBLE, tn-1, 0, MPI_COMM_WORLD);
+		MPI_Send(tosendup, 1, MPI_LONG_DOUBLE, tn+1, 0, MPI_COMM_WORLD);
 		MPI_Recv(torecvdown, 1, MPI_LONG_DOUBLE, tn-1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+		MPI_Send(tosenddown, 1, MPI_LONG_DOUBLE, tn-1, 0, MPI_COMM_WORLD);
+
       }
       
       MPI_Barrier(MPI_COMM_WORLD);
@@ -159,7 +158,8 @@ int main(int argc, char *argv[]) {
       
       MPI_Allreduce(&err_m, &err, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD); //collect errors into max
 
-      // std::cout << "error =  " << err << std::endl;
+      MPI_Barrier(MPI_COMM_WORLD);
+       std::cout << "error =  " << err << std::endl;
       //reassign edge values
 
       for (i = 0; i<nwg*NGHOST; ++i) {
@@ -227,14 +227,8 @@ int main(int argc, char *argv[]) {
 	    }
 	    
       }
-    }
 
-  MPI_Barrier(MPI_COMM_WORLD);
     
-  MPI_Finalize();
-
-  std::cout << "Made it past finalize, arr_final contains: " << arr_final[90] << std::endl;
-  
   auto stop = std::chrono::steady_clock::now();
   std::chrono::duration<double>  durr = stop - strt;
   std::cout << "Finished in " << durr.count() << " s" << std::endl;
@@ -266,6 +260,9 @@ int main(int argc, char *argv[]) {
       std::cout << "Can't open file for timing output";
     }
   }
-  
+}
+    
+  MPI_Finalize();
+ 
   return 0;
 }
