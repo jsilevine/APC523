@@ -47,9 +47,9 @@ int main(int argc, char *argv[]) {
   double  x, y = 0.;
   double* fval = (double*) malloc(n*n*sizeof(double));
   for (i = 0; i < n; ++i) {
-    x = (i + .5) * h;
+    y = (i + .5) * h;
     for (j = 0; j < n; ++j) {
-      y = (j + .5) * h;
+      x = (j + .5) * h;
       fval[i*n+j] =
         pow(M_PI,2.) * (16.*pow(y,2.)+81.*pow(x,4.))
           * cos(2*M_PI*pow(y,2.)) * cos(3*M_PI*pow(x,3.))

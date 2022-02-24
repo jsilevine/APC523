@@ -24,4 +24,3 @@ filepath <- "phi_128.png"
 ggsave(filepath, out)
 
 print(paste0("output saved to ", filepath))
-
