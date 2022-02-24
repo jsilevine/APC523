@@ -1,0 +1,47 @@
+rm: cannot remove 'time.csv': No such file or directory
+rm: cannot remove 'final_phi.csv': No such file or directory
+rm: cannot remove 'phi_128.png': No such file or directory
+Iter.      100, err = 7.899317e-03
+Iter.      200, err = 3.822101e-03
+Iter.      300, err = 2.038391e-03
+Iter.      400, err = 1.151277e-03
+Iter.      500, err = 6.676208e-04
+Iter.      600, err = 3.912963e-04
+Iter.      700, err = 2.302801e-04
+Iter.      800, err = 1.357299e-04
+Iter.      900, err = 8.004684e-05
+Iter.     1000, err = 4.721783e-05
+Iter.     1100, err = 2.785497e-05
+Iter.     1200, err = 1.643282e-05
+Iter.     1300, err = 9.694521e-06
+Iter.     1400, err = 5.719294e-06
+Iter.     1500, err = 3.374109e-06
+Iter.     1600, err = 1.990564e-06
+Iter.     1700, err = 1.174338e-06
+Iter.     1731, err = 9.971179e-07
+corrupted size vs. prev_size
+[adroit-09:2975497] *** Process received signal ***
+[adroit-09:2975497] Signal: Aborted (6)
+[adroit-09:2975497] Signal code:  (-6)
+[adroit-09:2975497] [ 0] /usr/lib64/libpthread.so.0(+0x12c20)[0x14e4b212cc20]
+[adroit-09:2975497] [ 1] /usr/lib64/libc.so.6(gsignal+0x10f)[0x14e4b1d8c37f]
+[adroit-09:2975497] [ 2] /usr/lib64/libc.so.6(abort+0x127)[0x14e4b1d76db5]
+[adroit-09:2975497] [ 3] /usr/lib64/libc.so.6(+0x7a4e7)[0x14e4b1dcf4e7]
+[adroit-09:2975497] [ 4] /usr/lib64/libc.so.6(+0x815ec)[0x14e4b1dd65ec]
+[adroit-09:2975497] [ 5] /usr/lib64/libc.so.6(+0x81e46)[0x14e4b1dd6e46]
+[adroit-09:2975497] [ 6] /usr/lib64/libc.so.6(+0x8327b)[0x14e4b1dd827b]
+[adroit-09:2975497] [ 7] /usr/local/openmpi/4.1.0/gcc/lib64/libmpi.so.40(ompi_mpi_finalize+0x349)[0x14e4b2cb8549]
+[adroit-09:2975497] [ 8] ./a.out[0x409cc8]
+[adroit-09:2975497] [ 9] /usr/lib64/libc.so.6(__libc_start_main+0xf3)[0x14e4b1d78493]
+[adroit-09:2975497] [10] ./a.out[0x408c2e]
+[adroit-09:2975497] *** End of error message ***
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun noticed that process rank 0 with PID 2975497 on node adroit-09 exited on signal 6 (Aborted).
+--------------------------------------------------------------------------
+Loading required package: ggplot2
+Saving 7 x 7 in image
+[1] "output saved to phi_128.png"
