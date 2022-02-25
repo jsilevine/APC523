@@ -1,4 +1,0 @@
-all: poisson_omp
-
-
-

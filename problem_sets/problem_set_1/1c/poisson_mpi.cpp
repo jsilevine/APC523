@@ -10,7 +10,7 @@
 
 #define NDEF    64
 #define NGHOST  1
-#define MAXITER 1000
+#define MAXITER 1000000
 #define OUTFREQ 100
 #define FOUT    1
 
@@ -43,13 +43,13 @@ int main(int argc, char *argv[]) {
   
   // initialize MPI process
   MPI_Init(NULL, NULL); 
-
+  
   nwg = n + 2*NGHOST;
   h   = 1./n; //gridcell size
   np = (n/nthreads); // size of parallel block
   npwg = np + 2*NGHOST;
 
-  //  std::cout << "npwg = "<< npwg << " np = " << np << " nwg = " << nwg << std::endl;
+
   // Main loop
   double  err  = std::numeric_limits<double>::max();
   double  ffac = .25 * pow(h, 2.);
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   double* tosenddown = (double*) calloc(nwg*NGHOST, sizeof(double));
   double* torecvup = (double*) calloc(nwg*NGHOST, sizeof(double));
   double* torecvdown = (double*) calloc(nwg*NGHOST, sizeof(double));
-  double* tarr = NULL;
+  double* tarr = (double*) calloc(npwg*nwg, sizeof(double));
   double terr = 0.;
   double err_m = 0.;
   int tn = 0;
@@ -75,6 +75,8 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &tn);
 
+  std::cout << world_size << std::endl;
+  
   // Fill in the source function
   double  x, y = 0.;
   double* fval = (double*) malloc(n*np*sizeof(double));
@@ -89,14 +91,7 @@ int main(int argc, char *argv[]) {
 	    + 4. *M_PI   * cos(3*M_PI*pow(x,3.)) * sin(2*M_PI*pow(y,2.));
 	}
   }
-
-  //  std::cout << fval[20] << " is fval[20]" << std::endl;
-  
-  // std::cout << "I am thread: " << tn << std::endl;
-  //  std::cout << "nthreads = " << nthreads << " = " << world_size << std::endl;
     while (err > eps && iter < MAXITER) {
-
-      // std::cout << "error at loop start =  " << err << std::endl;
       err_m = 0.;
       
 	for (i = NGHOST; i < npwg-NGHOST; ++i) { // only calculate values for interior cells
@@ -107,13 +102,11 @@ int main(int argc, char *argv[]) {
 	      ffac * fval[(i-NGHOST)*n+(j-NGHOST)];
 	    terr = std::abs(arr_curr[i*nwg+j] - arr_prev[i*nwg+j]);
 	    err_m = (terr > err_m) ? terr: err_m;
-
+	    if (err_m == 0) {
+	      std::cout << "err_m = 0 and arr_curr =  " << arr_curr[i*nwg+j] << std::endl;
+	    }
 	  }
 	}
-
-	//	std::cout << "t_err after assignment = " << terr << std::endl;
-	//	std::cout << "err_m after assignment = " << err_m << std::endl;
-
 	
       for (i = NGHOST; i < npwg-NGHOST; ++i) { 
 	  for (j = 0; j < NGHOST; ++j) {
@@ -129,50 +122,35 @@ int main(int argc, char *argv[]) {
 	    }
 	}
 
-      //      std::cout << "I, thread: " << tn << "made it through the main loop" << std::endl;
-      
       if (world_size > 1) { 
-	for (i = 0; i<nwg*NGHOST; ++i) {
+	for (i = 0; i<nwg; ++i) {
 	  tosenddown[i] = arr_curr[(nwg*NGHOST) + i];
 	  tosendup[i] = arr_curr[((npwg-NGHOST-1)*nwg)+i];
 	}      
 
-	//  std::cout << "I, thread: " << tn << "made it through the sendalloc loop" << std::endl;
-      
-      MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
       
       // communications
       if (tn == 0) {
-	//receive from and send to top only if bottom cell
 	MPI_Send(tosendup, nwg, MPI_LONG_DOUBLE, tn+1, 0, MPI_COMM_WORLD);
-	//	std::cout << "I, thread: " << tn << "am sending rows: " << nwg*NGHOST << " through " << nwg*NGHOST + nwg*NGHOST << " to thread " << tn+1 << std::endl;
 	MPI_Recv(torecvup, nwg, MPI_LONG_DOUBLE, tn+1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
-	//	std::cout << "I, thread: " << tn << "received from thread: " << tn+1 << std::endl;
       } else if (tn == world_size-1) {
 	MPI_Recv(torecvdown, nwg, MPI_LONG_DOUBLE, tn-1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
-	//	std::cout << "I, thread: " << tn << " received from thread: " << tn-1 << std::endl;
 	MPI_Send(tosenddown, nwg, MPI_LONG_DOUBLE, tn-1, 0, MPI_COMM_WORLD);
-	//	std::cout << "I, thread: " << tn << " am sending rows: " << (npwg-NGHOST-1)*nwg << " through " << (npwg-NGHOST-1)*nwg + nwg*NGHOST << " to thread " << tn-1 << std::endl; 
       } else {
 	//	receive and send to both top and bottom if in the middle
-		MPI_Recv(torecvup, 1, MPI_LONG_DOUBLE, tn+1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
-		MPI_Send(tosendup, 1, MPI_LONG_DOUBLE, tn+1, 0, MPI_COMM_WORLD);
-		MPI_Recv(torecvdown, 1, MPI_LONG_DOUBLE, tn-1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
-		MPI_Send(tosenddown, 1, MPI_LONG_DOUBLE, tn-1, 0, MPI_COMM_WORLD);
+	MPI_Recv(torecvdown, nwg, MPI_LONG_DOUBLE, tn-1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+	MPI_Send(tosendup, nwg, MPI_LONG_DOUBLE, tn+1, 0, MPI_COMM_WORLD);
+
+	MPI_Recv(torecvup, nwg, MPI_LONG_DOUBLE, tn+1, MPI_ANY_TAG, MPI_COMM_WORLD, NULL);
+	MPI_Send(tosenddown, nwg, MPI_LONG_DOUBLE, tn-1, 0, MPI_COMM_WORLD);
+	
       }
       
       MPI_Barrier(MPI_COMM_WORLD);
-      //  std::cout << "crashing after barrier " << std::endl;
-
-      //      std::cout << "error before reduce =  " << err << std::endl;
-      // std::cout << "err_m before reduce = " << err_m << std::endl;
-      
       MPI_Allreduce(&err_m, &err, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD); //collect errors into max
       MPI_Barrier(MPI_COMM_WORLD);
-
-      // std::cout << "error after reduce =  " << err << std::endl;
-      //reassign edge values
-
+      
       for (i = 0; i<nwg*NGHOST; ++i) {
 
 	if (tn == world_size-1) {
@@ -181,12 +159,10 @@ int main(int argc, char *argv[]) {
 	  arr_curr[(npwg-NGHOST)*nwg+i] = torecvup[i];
 	} else {
 	  arr_curr[i] = torecvdown[i];
-	  arr_curr[(npwg-NGHOST)*nwg+i] = torecvdown[i];
+	  arr_curr[(npwg-NGHOST)*nwg+i] = torecvup[i];
 	}	
       }
     }
-      
-      //      std::cout << "crashing after this " << std::endl;
 
       if (world_size == 1) {
 	err = err_m;
@@ -195,8 +171,6 @@ int main(int argc, char *argv[]) {
       tarr     = arr_prev;
       arr_prev = arr_curr;
       arr_curr = tarr;
-
-      //      std::cout << "made it past arr reass" << std::endl;
       
       MPI_Barrier(MPI_COMM_WORLD);
       iter++;
@@ -208,8 +182,6 @@ int main(int argc, char *argv[]) {
 	  ", err = " << std::scientific <<  err << std::endl;
       }
       }
-
-      //  std::cout << "error before loop end =  " << err << std::endl;
       
       MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -226,53 +198,23 @@ int main(int argc, char *argv[]) {
     
      MPI_Barrier(MPI_COMM_WORLD);
     
-    // MPI_Gather(agg_send, np*n, MPI_LONG_DOUBLE, arr_final, np*n, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
-    
     if(tn == 0){
-
       for (j=0; j<np*n; ++j) {
-
-	  arr_final[j] = agg_send[j];
-	  
+	  arr_final[j] = agg_send[j];	  
 	}
-
       for (i=1; i<world_size; ++i) {
-
 	MPI_Recv(agg_arr, np*n, MPI_LONG_DOUBLE, i, i, MPI_COMM_WORLD, NULL);
-	    
 	    for (j = i*np*n; j<(i*np*n)+(np*n); ++j) {
-	      //	      std::cout << "the issue is accessing arr_final" << agg_arr[90] << std::endl;
-	      arr_final[j] = agg_arr[j-(i*np*n)];
-	  
-	    }
-	    
+	      arr_final[j] = agg_arr[j-(i*np*n)];	  
+	    }	    
       }
-    
+      
   auto stop = std::chrono::steady_clock::now();
   std::chrono::duration<double>  durr = stop - strt;
   std::cout << "Finished in " << durr.count() << " s" << std::endl;
 
-  std::cout << "I, thread: " << tn << " am saving output to file" << std::endl;
-  
   // Final time step output
   if (FOUT) {
-    std::ofstream arr_file("final_phi.csv"); // modified to export .csv bc easier4me
-    if (arr_file.is_open()) {
-     // arr_file << n << ", " << NGHOST << ", " << eps << ", " << iter
-      //  << ", " << err << std::endl;
-      for (i = 0; i < np; ++i) {
-        for (j = 0; j < np; ++j) {
-          arr_file << arr_final[i*np+j] << ", ";
-        }
-        arr_file << std::endl;
-      }
-      arr_file.close();
-    } else {
-      std::cout << "Can't open file for final phi output";
-    }
-
-    std::cout << "I, thread: " << tn << " am finished saving output to file" << std::endl;
-    
     // write runtime output
     std::ofstream timing_file("time.csv", std::ios::app);
     if (timing_file.is_open()) {
@@ -284,7 +226,7 @@ int main(int argc, char *argv[]) {
       std::cout << "Can't open file for timing output";
     }
   }
-}
+    }
     
   MPI_Finalize();
  

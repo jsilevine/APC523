@@ -7,5 +7,5 @@ do
 done
 
 ## generate timing plot
-Rscript p1b_fig_gen.R
+Rscript p1b.R
 
