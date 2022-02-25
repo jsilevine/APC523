@@ -4,7 +4,7 @@
 for nthreads in 1 2 4 8 16
 do
 
-mpirun --use-hwthread-cpus -np $nthreads ./a.out 128 1e-6 $nthreads
+mpirun --use-hwthread-cpus -np $nthreads ./a.out 1024 1e-6 $nthreads
 
 done
 
