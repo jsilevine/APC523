@@ -1,0 +1,49 @@
+Iter.      100, err = 4.109859e-03
+Iter.      200, err = 1.410532e-03
+Iter.      300, err = 7.071698e-04
+Iter.      400, err = 4.377573e-04
+Iter.      500, err = 3.016094e-04
+Iter.      600, err = 2.136401e-04
+Iter.      700, err = 1.519410e-04
+Iter.      800, err = 1.081542e-04
+Iter.      900, err = 7.700692e-05
+Iter.     1000, err = 5.483437e-05
+Finished in 9.268176e-02 s
+I, thread: 0 am saving output to file
+I, thread: 0 am finished saving output to file
+[adroit-09:2997150:0:2997150] Caught signal 11 (Segmentation fault: address not mapped to object at address 0xb1)
+==== backtrace (tid:2997150) ====
+ 0  /lib64/libucs.so.0(ucs_handle_error+0x2a4) [0x14bead3912a4]
+ 1  /lib64/libucs.so.0(+0x2347c) [0x14bead39147c]
+ 2  /lib64/libucs.so.0(+0x2364a) [0x14bead39164a]
+ 3  /lib64/libucs.so.0(ucs_mpool_cleanup+0x2d) [0x14bead38a28d]
+ 4  /lib64/libucp.so.0(ucp_worker_destroy+0xc2) [0x14beada308d2]
+ 5  /usr/local/openmpi/4.1.0/gcc/lib64/openmpi/mca_pml_ucx.so(mca_pml_ucx_cleanup+0x17b) [0x14beade8f12b]
+ 6  /usr/local/openmpi/4.1.0/gcc/lib64/libmpi.so.40(ompi_mpi_finalize+0x59c) [0x14bebcac379c]
+ 7  ./a.out() [0x409f99]
+ 8  /usr/lib64/libc.so.6(__libc_start_main+0xf3) [0x14bebbb83493]
+ 9  ./a.out() [0x408c2e]
+=================================
+[adroit-09:2997150] *** Process received signal ***
+[adroit-09:2997150] Signal: Segmentation fault (11)
+[adroit-09:2997150] Signal code:  (-6)
+[adroit-09:2997150] Failing at address: 0x2557c002dbb9e
+[adroit-09:2997150] [ 0] /usr/lib64/libpthread.so.0(+0x12c20)[0x14bebbf37c20]
+[adroit-09:2997150] [ 1] /lib64/libucs.so.0(ucs_mpool_cleanup+0x2d)[0x14bead38a28d]
+[adroit-09:2997150] [ 2] /lib64/libucp.so.0(ucp_worker_destroy+0xc2)[0x14beada308d2]
+[adroit-09:2997150] [ 3] /usr/local/openmpi/4.1.0/gcc/lib64/openmpi/mca_pml_ucx.so(mca_pml_ucx_cleanup+0x17b)[0x14beade8f12b]
+[adroit-09:2997150] [ 4] /usr/local/openmpi/4.1.0/gcc/lib64/libmpi.so.40(ompi_mpi_finalize+0x59c)[0x14bebcac379c]
+[adroit-09:2997150] [ 5] ./a.out[0x409f99]
+[adroit-09:2997150] [ 6] /usr/lib64/libc.so.6(__libc_start_main+0xf3)[0x14bebbb83493]
+[adroit-09:2997150] [ 7] ./a.out[0x408c2e]
+[adroit-09:2997150] *** End of error message ***
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun noticed that process rank 1 with PID 2997150 on node adroit-09 exited on signal 11 (Segmentation fault).
+--------------------------------------------------------------------------
+Loading required package: ggplot2
+Saving 7 x 7 in image
+[1] "output saved to phi_128.png"

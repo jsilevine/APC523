@@ -39,6 +39,8 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  auto    strt = std::chrono::steady_clock::now();
+  
   // initialize MPI process
   MPI_Init(NULL, NULL); 
 
@@ -51,10 +53,9 @@ int main(int argc, char *argv[]) {
   // Main loop
   double  err  = std::numeric_limits<double>::max();
   double  ffac = .25 * pow(h, 2.);
-  auto    strt = std::chrono::steady_clock::now();
-
+  
   //  double* arr_final = (double*) calloc(n*n, sizeof(double));
-  double* arr_final = (double*) calloc(np*np, sizeof(double));
+  double* arr_final = (double*) calloc(n*n, sizeof(double));
   double* arr_curr = (double*) calloc(npwg*nwg, sizeof(double));
   double* arr_prev = (double*) calloc(npwg*nwg, sizeof(double));      
   double* agg_arr = (double*) calloc(np*n, sizeof(double));
@@ -251,6 +252,8 @@ int main(int argc, char *argv[]) {
   std::chrono::duration<double>  durr = stop - strt;
   std::cout << "Finished in " << durr.count() << " s" << std::endl;
 
+  std::cout << "I, thread: " << tn << " am saving output to file" << std::endl;
+  
   // Final time step output
   if (FOUT) {
     std::ofstream arr_file("final_phi.csv"); // modified to export .csv bc easier4me
@@ -267,6 +270,9 @@ int main(int argc, char *argv[]) {
     } else {
       std::cout << "Can't open file for final phi output";
     }
+
+    std::cout << "I, thread: " << tn << " am finished saving output to file" << std::endl;
+    
     // write runtime output
     std::ofstream timing_file("time.csv", std::ios::app);
     if (timing_file.is_open()) {
